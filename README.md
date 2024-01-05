@@ -1,8 +1,16 @@
 # Boot OSTree Deployments with UEFI Secure Boot and TPM secrets
 
+## finalize-ostree-uki.py
+
+This script parses the Linux Boot Loader Specification (https://uapi-group.org/specifications/specs/boot_loader_specification/) files that OSTree generates and places in /boot/loader/entries and generates a systemd-ukify configuration.
+
+Ukify is used to create a signed Unified Kernel Image (UKI) which when booted can unseal secret bound to a PCR value or policy. UKI images are saved to `$ESP/EFI/Linux` and are intended to be booted with the systemd-boot bootloader.
+
+The entire OSTree repo, deployments, and boot files remain encrypted by LUKS & dm-crypt. Btrfs, ZFS, and/or dm-integrity can be used to ensure integrity at rest.
+
 ## Summary
 
-Until I write this up more completely. Here's the cliff notes:
+Until I write this process up more completely, here's the cliff notes:
 
 1. Set up LUKS backed block storage for OS and data. Use your distro's documentation for this. I encrypt Btrfs under the LUKS volume.
 2. Set up your owner PK with sbctl (https://github.com/Foxboron/sbctl) and sign your existing uefi bootloader. You should also switch from GRUB to systemd-boot at this time. I had this completed from my earlier Fedora Workstation install.
@@ -18,14 +26,6 @@ Until I write this up more completely. Here's the cliff notes:
 9. For the first reboot you can use `systemctl daemon-reload && touch /run/ostree/staged-deployment && systemctl stop ostree-finalize-staged.service` to manually trigger an OSTree deployment finalization.
 10. Use `sbctl verify` to verify all required EFI binaries are correctly signed. Use `bootctl` to set the deployment for the next boot.
 11. Reboot and enter your PIN you enrolled earlier. If done correctly, you should have a trustworthy UEFI Secure Boot & TPM2 setup.
-
-## finalize-ostree-uki.py
-
-This script parses the Linux Boot Loader Specification (https://uapi-group.org/specifications/specs/boot_loader_specification/) files that OSTree generates and places in /boot/loader/entries and generates a systemd-ukify configuration.
-
-Ukify is used to create a signed Unified Kernel Image (UKI) which when booted can unseal secret bound to a PCR value or policy. UKI images are saved to `$ESP/EFI/Linux` and are intended to be booted with the systemd-boot bootloader.
-
-The entire OSTree repo, deployments, and boot files remain encrypted by LUKS & dm-crypt. Btrfs, ZFS, and/or dm-integrity can be used to ensure integrity at rest.
 
 ## Resources
 
