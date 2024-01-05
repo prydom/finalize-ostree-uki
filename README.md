@@ -4,9 +4,11 @@
 
 This script parses the Linux Boot Loader Specification (https://uapi-group.org/specifications/specs/boot_loader_specification/) files that OSTree generates and places in /boot/loader/entries. The script generates ephemeral systemd-ukify configurations and executes that tool.
 
-Ukify is used to create a signed Unified Kernel Image (UKI) which when booted can unseal secret bound to a PCR value or policy. UKI images are saved to `$ESP/EFI/Linux` and are intended to be booted with the systemd-boot bootloader.
+Ukify is used to create a signed Unified Kernel Image (UKI) which when booted can unseal secrets bound to a PCR value or policy. UKI images are saved to `$ESP/EFI/Linux` and are intended to be booted with the systemd-boot bootloader.
 
 The entire OSTree repo, deployments, and boot files remain encrypted by LUKS & dm-crypt. Btrfs, ZFS, and/or dm-integrity can be used to ensure integrity at rest.
+
+This script is not intended to be upstreamed. It is a proof of concept for what is required for https://github.com/ostreedev/ostree/issues/1719 and https://github.com/ostreedev/ostree/issues/2753. In particular, it does **not** attempt to atomically update the ESP, reduce duplication of efi binaries, or support boot counting.
 
 ## Summary
 
