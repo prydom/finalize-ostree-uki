@@ -44,7 +44,7 @@ def buildUkiFileName(entryPath: Path) -> str:
     entryName = entryName.rpartition('.')[0]+'.efi'
     return entryName
 
-def runUkify(ukifyOptions: str, output: Path, verbose: bool):
+def runUkify(ukifyOptions: str, output: Path, verbose: bool) -> None:
     with tempfile.NamedTemporaryFile(delete_on_close=False) as ukifyOptionsFile:
         ukifyOptionsFile.write(ukifyOptions.encode('utf-8'))
         ukifyOptionsFile.close()
