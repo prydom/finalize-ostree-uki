@@ -17,15 +17,16 @@ Until I write this process up more completely, here's the cliff notes:
 3. Use `create-pcr-keys-rsa2048.sh` and `enroll-pcr-wrapped-key-rsa2048.sh` from this repo to enroll a TPM2 PCR 11 policy and PIN which together seals a LUKS slot secret. Systemd's initrd measures the "ELF kernel image, embedded initrd and other payload of the PE image" into this PCR. This includes the kernel command line options. I additionally include the measured value of TPM 7, which includes the UEFI Secure Boot state. (https://www.freedesktop.org/software/systemd/man/latest/systemd-cryptenroll.html).
 4. Use OSTree (https://github.com/ostreedev/ostree) to deploy a stateroot in a new btrfs subvol. This allows you to create a side-by-side installation with an existing traditional Linux install (e.g. Fedora, Arch, Ubuntu).
 5. Mount your EFI system partition to /boot/efi.
-6. If using Fedora, do the following.
+6. If using upstream Fedora, do the following.
     - Merge the `etc/dracut.conf.d/90-local.conf` from this repo into your OSTree deployment /etc to enable the `systemd-pcrphase` module - to enable measurement into PCR 11.
-    - Use rpm-ostree to enable initramfs generation during deployment staging.
+    - Use `rpm-ostree` to enable initramfs generation during deployment staging.
     - Add package overlays for `sbsigntools`, `systemd-boot-unsigned`, `systemd-ukify`.
-7. Copy `finalize-ostree-uki.py` to /usr/local/sbin
-8. Merge the `etc/systemd/system/ostree-finalize-staged.service.d/override.conf` from this repo into your OSTree deployment /etc. This will run `finalize-ostree-uki.py` when a staged OSTree deployment is finalized.
-9. For the first reboot you can use `systemctl daemon-reload && touch /run/ostree/staged-deployment && systemctl stop ostree-finalize-staged.service` to manually trigger an OSTree deployment finalization.
-10. Use `sbctl verify` to verify all required EFI binaries are correctly signed. Use `bootctl` to set the deployment for the next boot.
-11. Reboot and enter your PIN you enrolled earlier. If done correctly, you should have a trustworthy UEFI Secure Boot & TPM2 setup.
+7. Use `ostree` or `rpm-ostree` to add `rd.luks.options=tpm2-device=auto` to your kernel boot options.
+8. Copy `finalize-ostree-uki.py` to /usr/local/sbin
+9. Merge the `etc/systemd/system/ostree-finalize-staged.service.d/override.conf` from this repo into your OSTree deployment /etc. This will run `finalize-ostree-uki.py` when a staged OSTree deployment is finalized.
+10. For the first reboot you can use `systemctl daemon-reload && touch /run/ostree/staged-deployment && systemctl stop ostree-finalize-staged.service` to manually trigger an OSTree deployment finalization.
+11. Use `sbctl verify` to verify all required EFI binaries are correctly signed. Use `bootctl` to set the deployment for the next boot.
+12. Reboot and enter your PIN you enrolled earlier. If done correctly, you should have a trustworthy UEFI Secure Boot & TPM2 setup.
 
 ## Resources
 
