@@ -55,7 +55,7 @@ def runUkify(ukifyOptions: str, output: Path, verbose: bool) -> None:
             print(f"ERROR: ukify returned a non-zero return code: {process.returncode}")
             print(f'failed processing {output}')
             print(f'options:\n{ukifyOptions}')
-            print(process.stdout)
+            print(process.stdout.decode('utf-8'))
         elif verbose:
             print(f'--- processing {output}')
             print(f'options:\n{ukifyOptions}')
@@ -103,13 +103,18 @@ def main() -> None:
                 continue
 
             kernelOptions = parsedEntry['options']
-            ostreeDeployment = Path(getOSTreeDeployment(kernelOptions))
-            if ostreeDeployment.exists():
-                osReleasePath = ostreeDeployment.joinpath('usr/lib/os-release')
+            ostreeDeployment = getOSTreeDeployment(kernelOptions)
+            if ostreeDeployment is None:
+                print(f"ERROR: Boot loader entry {entryPath} is not booting an OSRoot deployment.")
+                continue
+
+            ostreeDeploymentPath = Path(ostreeDeployment)
+            if ostreeDeploymentPath.exists():
+                osReleasePath = ostreeDeploymentPath.joinpath('usr/lib/os-release')
                 if not osReleasePath.exists():
                     print(f'ERROR: Missing os-release {osReleasePath} for {entryPath}')
                     continue
-                unamePathGlob = list(ostreeDeployment.joinpath('usr/lib/modules').glob('*'))
+                unamePathGlob = list(ostreeDeploymentPath.joinpath('usr/lib/modules').glob('*'))
                 if len(unamePathGlob) != 1:
                     print(f'ERROR: multiple kernels in deployment {osReleasePath} for {entryPath}')
                     continue
