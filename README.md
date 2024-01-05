@@ -2,7 +2,7 @@
 
 ## finalize-ostree-uki.py
 
-This script parses the Linux Boot Loader Specification (https://uapi-group.org/specifications/specs/boot_loader_specification/) files that OSTree generates and places in /boot/loader/entries and generates a systemd-ukify configuration.
+This script parses the Linux Boot Loader Specification (https://uapi-group.org/specifications/specs/boot_loader_specification/) files that OSTree generates and places in /boot/loader/entries. The script generates ephemeral systemd-ukify configurations and executes that tool.
 
 Ukify is used to create a signed Unified Kernel Image (UKI) which when booted can unseal secret bound to a PCR value or policy. UKI images are saved to `$ESP/EFI/Linux` and are intended to be booted with the systemd-boot bootloader.
 
