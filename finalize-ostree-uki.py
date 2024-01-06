@@ -3,6 +3,7 @@
 from pathlib import Path
 from typing import *
 import shlex
+import os
 import tempfile
 import argparse
 import subprocess
@@ -34,6 +35,11 @@ PCRPrivateKey={PCR_PRIVATE_KEY_PATH}
 PCRPublicKey={PCR_PUBLIC_KEY_PATH}
 Phases=enter-initrd'''
 
+def fsyncPath(path: Union[str, Path]) -> None:
+    fd = os.open(str(path), os.O_RDONLY)
+    os.fsync(fd)
+    os.close(fd)
+
 def getOSTreeDeployment(kernelOptions: str) -> Optional[str]:
     for option in kernelOptions.split():
         if option.startswith('ostree='):
@@ -48,18 +54,33 @@ def runUkify(ukifyOptions: str, output: Path, verbose: bool) -> None:
     with tempfile.NamedTemporaryFile(delete_on_close=False) as ukifyOptionsFile:
         ukifyOptionsFile.write(ukifyOptions.encode('utf-8'))
         ukifyOptionsFile.close()
+
+        swapUkiFilename = str(output)+'_swap'
         process = subprocess.run(['/usr/lib/systemd/ukify', 'build',
                                   '--config', ukifyOptionsFile.name,
-                                  '--output', str(output)], capture_output=True)
+                                  '--output', swapUkiFilename], capture_output=True)
+
         if process.returncode != 0:
             print(f"ERROR: ukify returned a non-zero return code: {process.returncode}")
             print(f'failed processing {output}')
             print(f'options:\n{ukifyOptions}')
             print(process.stdout.decode('utf-8'))
+            try:
+                os.remove(swapUkiFilename)
+            except:
+                print(f'WARNING: failed to cleanup {swapUkiFilename}')
+            return
         elif verbose:
             print(f'--- processing {output}')
             print(f'options:\n{ukifyOptions}')
             print(process.stdout.decode('utf-8'))
+
+    try:
+        fsyncPath(swapUkiFilename)
+        os.rename(swapUkiFilename, output)
+        fsyncPath(output)
+    except Exception as e:
+        print(f"ERROR: Failed to rename {swapUkiFilename} to {output}, {e}")
 
 
 def main() -> None:
@@ -87,7 +108,8 @@ def main() -> None:
                 elif split[0] in parsedEntry:
                     if split[0] == 'initrd':
                         parsedEntry['initrd'].append('/boot'+split[1])
-                    print(f'WARNING: Duplicated entry key {split[0]}')
+                    else:
+                        print(f'WARNING: Duplicated entry key {split[0]}')
                 elif split[0] == 'initrd':
                     parsedEntry['initrd'] = ['/boot'+split[1]]
                 else:
