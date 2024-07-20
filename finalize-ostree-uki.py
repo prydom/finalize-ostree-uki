@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 from pathlib import Path
-from typing import *
+from typing import Union, Optional
 import shlex
 import os
 import tempfile
@@ -67,7 +67,7 @@ def runUkify(ukifyOptions: str, output: Path, verbose: bool) -> None:
             print(process.stdout.decode('utf-8'))
             try:
                 os.remove(swapUkiFilename)
-            except:
+            except Exception as _:
                 print(f'WARNING: failed to cleanup {swapUkiFilename}')
             return
         elif verbose:
@@ -117,7 +117,7 @@ def main() -> None:
 
             missing = False
             for option in REQUIRED_BOOT_ENTRY_OPTIONS:
-                if not option in parsedEntry:
+                if option not in parsedEntry:
                     print(f'ERROR: Missing entry key {option} for {entryPath}')
                     missing = True
             if missing:
